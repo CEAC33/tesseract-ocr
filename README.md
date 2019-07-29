@@ -258,3 +258,98 @@ to test
 Tesseract OCR
 ```
 
+![alt text](https://user-images.githubusercontent.com/51218415/62078448-4d724280-b212-11e9-877e-ec034bf24bf2.png)
+
+As you can see in this screenshot, the thresholded image is very clear and the background has been removed. Our script correctly prints the contents of the image to the console.
+
+Next, let’s test Tesseract and our pre-processing script on an image with “salt and pepper” noise in the background:
+
+![alt text](https://www.pyimagesearch.com/wp-content/uploads/2017/06/example_02.png)
+
+We can see the output of the tesseract  binary below:
+```bash
+$ tesseract images/example_02.png stdout
+Warning: Invalid resolution 0 dpi. Using 70 instead.
+Estimating resolution as 614
+Detected 32 diacritics
+_ Tesseract Will
+Fail With Noisy
+_ Backgrounds —
+```
+
+Unfortunately, Tesseract did not successfully OCR the text in the image.
+
+However, by using the blur  pre-processing method in ocr.py  we can obtain better results:
+```bash
+python ocr.py --image images/example_02.png --preprocess blur
+Tesseract Will
+Fail With Noisy
+Backgrounds
+```
+
+![alt text](https://user-images.githubusercontent.com/51218415/62079606-aba02500-b214-11e9-9aa2-27fdd796faee.png)
+
+Success! Our blur pre-processing step enabled Tesseract to correctly OCR and output our desired text.
+
+Finally, let’s try another image, this one with more text:
+
+![alt text](https://www.pyimagesearch.com/wp-content/uploads/2017/06/example_03.png)
+
+```bash
+$ tesseract images/example_03.png stdout
+Warning: Invalid resolution 0 dpi. Using 70 instead.
+Estimating resolution as 157
+PREREQUISITES
+
+In order to make the most of this, you will need to have
+alittle bit of programming experience. All examples in this
+book are in the Python programming language. Familiarity
+with Python or other scripting languages is suggested, but
+not required.
+
+You'll also need to know some basic mathematics. This
+book is hands-on and example driven: lots of examples and
+lots of code, so even if your math skills are not up to par,
+do not worry! The examples are very detailed and heavily
+documented to help you follow along.
+```
+
+Followed by testing the image with `ocr.py` :
+```bash
+python ocr.py --image images/example_03.png
+PREREQUISITES
+
+In order to make the most of this, you will need to have
+alittle bit of programming experience. All examples in this
+book are in the Python programming language. Familiarity
+with Python or other scripting languages is suggested, but
+not required.
+
+You'll also need to know some basic mathematics. This
+book is hands-on and example driven: lots of examples and
+lots of code, so even if your math skills are not up to par,
+do not worry! The examples are very detailed and heavily
+documented to help you follow along.
+```
+
+Python + Tesseract did a reasonable job here, but once again we have demonstrated the limitations of the library as an off-the-shelf classifier.
+
+We may obtain good or acceptable results with Tesseract for OCR, but the best accuracy will come from training custom character classifiers on specific sets of fonts that appear in actual real-world images.
+
+Don’t let the results of Tesseract OCR discourage you — simply manage your expectations and be realistic on Tesseract’s performance. There is no such thing as a true “off-the-shelf” OCR system that will give you perfect results (there are bound to be some errors).
+
+**Note:** If your text is rotated, you may wish to do additional pre-processing. Otherwise, if you’re interested in building a mobile document scanner, you now have a reasonably good OCR system to integrate into it.
+
+### Summary
+
+We learned how to apply the Tesseract OCR engine with the Python programming language. This enabled us to apply OCR algorithms from within our Python script.
+
+The biggest downside is with the limitations of Tesseract itself. Tesseract works best when there are extremely clean segmentations of the foreground text from the background.
+
+Furthermore these segmentations need to be as high resolution (DPI) as possible and the characters in the input image cannot appear “pixelated” after segmentation. If characters do appear pixelated then Tesseract will struggle to correctly recognize the text — we found this out even when applying images captured under ideal conditions (a PDF screenshot).
+
+OCR, while no longer a new technology, is still an active area of research in the computer vision literature especially when applying OCR to real-world, unconstrained images. Deep learning and Convolutional Neural Networks (CNNs) are certainly enabling us to obtain higher accuracy, but we are still a long way from seeing “near perfect” OCR systems. Furthermore, as OCR has many applications across many domains, some of the best algorithms used for OCR are commercial and require licensing to be used in your own projects.
+
+My primary suggestion to readers when applying OCR to their own projects is to first try Tesseract and if results are undesirable move on to the Google Vision API. (https://cloud.google.com/vision/)
+
+*If neither **Tesseract** nor the **Google Vision API** obtain reasonable accuracy*, you might want to reassess your dataset and decide if it’s worth it to train your own custom character classifier — this is especially true if your dataset is noisy and/or contains very specific fonts you wish to detect and recognize. Examples of specific fonts include the digits on a credit card, the account and routing numbers found at the bottom of checks, or stylized text used in graphic design.
