@@ -116,7 +116,7 @@ In order to accomplish that, you’ll need to apply feature extraction technique
 
 ### Summary
 
-Today we learned how to install and configure Tesseract on our machines, the first part in a two part series on using Tesseract for OCR. We then used the  tesseract  binary to apply OCR to input images.
+We learned how to install and configure Tesseract on our machines, the first part in a two part series on using Tesseract for OCR. We then used the  tesseract  binary to apply OCR to input images.
 
 However, we found out that unless our images are cleanly segmented Tesseract will give poor results. In the case of “noisy” input images, we’ll likely obtain better accuracy by training a custom machine learning model to recognize characters in our specific use case.
 
