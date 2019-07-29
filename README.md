@@ -121,3 +121,121 @@ Today we learned how to install and configure Tesseract on our machines, the fir
 However, we found out that unless our images are cleanly segmented Tesseract will give poor results. In the case of “noisy” input images, we’ll likely obtain better accuracy by training a custom machine learning model to recognize characters in our specific use case.
 
 Tesseract is best suited for situations with high resolution inputs where the foreground text is cleanly segmented from the background.
+
+## Using Tesseract OCR with Python
+
+### Installing the Tesseract + Python “bindings”
+
+```bash
+workon cv
+```
+
+```bash
+pip install pillow
+pip install pytesseract
+```
+
+**Note:** pytesseract  does not provide true Python bindings. Rather, it simply provides an interface to the tesseract  binary. If you take a look at the project on GitHub you’ll see that the library is writing the image to a temporary file on disk followed by calling the tesseract  binary on the file and capturing the resulting output. This is definitely a bit hackish, but it gets the job done for us.
+
+### Applying OCR with Tesseract and Python
+
+Let’s begin by creating a new file named `ocr.py`:
+```python
+# import the necessary packages
+from PIL import Image
+import pytesseract
+import argparse
+import cv2
+import os
+ 
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required=True,
+	help="path to input image to be OCR'd")
+ap.add_argument("-p", "--preprocess", type=str, default="thresh",
+	help="type of preprocessing to be done")
+args = vars(ap.parse_args())
+```
+
+**Lines 2-6** handle our imports. The Image  class is required so that we can load our input image from disk in PIL format, a requirement when using pytesseract .
+
+Our command line arguments are parsed on Lines 9-14. We have two command line arguments:
+
+* `--image`: The path to the image we’re sending through the OCR system.
+* `--preprocess`: The preprocessing method. This switch is optional and for this tutorial and can accept two values:  thresh  (threshold) or blur .
+
+Next we’ll load the image, binarize it, and write it to disk.
+
+```python
+# load the example image and convert it to grayscale
+image = cv2.imread(args["image"])
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+ 
+# check to see if we should apply thresholding to preprocess the
+# image
+if args["preprocess"] == "thresh":
+	gray = cv2.threshold(gray, 0, 255,
+		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+ 
+# make a check to see if median blurring should be done to remove
+# noise
+elif args["preprocess"] == "blur":
+	gray = cv2.medianBlur(gray, 3)
+ 
+# write the grayscale image to disk as a temporary file so we can
+# apply OCR to it
+filename = "{}.png".format(os.getpid())
+cv2.imwrite(filename, gray)
+```
+
+First, we load `--image` from disk into memory (**Line 17**) followed by converting it to grayscale (**Line 18**).
+
+Next, depending on the pre-processing method specified by our command line argument, we will either threshold or blur the image. This is where you would want to add more advanced pre-processing methods (depending on your specific application of OCR) which are beyond the scope of this blog post.
+
+The `if` statement and body on **Lines 22-24** perform a threshold in order to segment the foreground from the background. We do this using both  `cv2.THRESH_BINARY` and `cv2.THRESH_OTSU` flags. For details on Otsu’s method, see “Otsu’s Binarization” in the official OpenCV documentation. (https://docs.opencv.org/trunk/d7/d4d/tutorial_py_thresholding.html)
+
+We will see later in the results section that this thresholding method can be useful to read dark text that is overlaid upon gray shapes.
+
+Alternatively, a blurring method may be applied. **Lines 28-29** perform a median blur when the `--preprocess` flag is set to `blur` . Applying a median blur can help reduce salt and pepper noise, again making it easier for Tesseract to correctly OCR the image.
+
+After pre-processing the image, we use `os.getpid` to derive a temporary image filename based on the process ID of our Python script (**Line 33**).
+
+The final step before using `pytesseract` for OCR is to write the pre-processed image, `gray`, to disk saving it with the `filename` from above (Line 34).
+
+We can finally apply OCR to our image using the Tesseract Python “bindings”:
+```python
+# load the image as a PIL/Pillow image, apply OCR, and then delete
+# the temporary file
+text = pytesseract.image_to_string(Image.open(filename))
+os.remove(filename)
+print(text)
+ 
+# show the output images
+cv2.imshow("Image", image)
+cv2.imshow("Output", gray)
+cv2.waitKey(0)
+```
+
+Using `pytesseract.image_to_string` on **Line 38** we convert the contents of the image into our desired string, text . Notice that we passed a reference to the temporary image file residing on disk.
+
+This is followed by some cleanup on **Line 39** where we delete the temporary file.
+
+**Line 40** is where we print text to the terminal. In your own applications, you may wish to do some additional processing here such as spellchecking for OCR errors or Natural Language Processing rather than simply printing it to the console as we’ve done in this tutorial.
+
+Finally, **Lines 43 and 44** handle displaying the original image and pre-processed image on the screen in separate windows. The `cv2.waitKey(0)` on Line 34 indicates that we should wait until a key on the keyboard is pressed before exiting the script.
+
+### Tesseract OCR and Python results
+
+Now that `ocr.py` has been created, it’s time to apply Python + Tesseract to perform OCR on some example input images.
+
+In this section we will try OCR’ing three sample images using the following process:
+
+- First, we will run each image through the Tesseract binary as-is.
+- Then we will run each image through `ocr.py` (which performs pre-processing before sending through Tesseract).
+- Finally, we will compare the results of both of these methods and note any errors.
+
+Our first example is a “noisy” image. This image contains our desired foreground black text on a background that is partly white and partly scattered with artificially generated circular blobs. The blobs act as “distractors” to our simple algorithm.
+
+![alt text](https://www.pyimagesearch.com/wp-content/uploads/2017/06/example_01.png)
+
+Using the Tesseract binary, as we learned last week, we can apply OCR to the raw, unprocessed image:
