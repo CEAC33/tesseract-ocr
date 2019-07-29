@@ -239,3 +239,22 @@ Our first example is a “noisy” image. This image contains our desired foregr
 ![alt text](https://www.pyimagesearch.com/wp-content/uploads/2017/06/example_01.png)
 
 Using the Tesseract binary, as we learned last week, we can apply OCR to the raw, unprocessed image:
+```bash
+$ tesseract images/example_01.png stdout
+Warning: Invalid resolution 0 dpi. Using 70 instead.
+Estimating resolution as 575
+Noisyimage
+to test
+Tesseract OCR
+```
+
+Tesseract performed well with no errors in this case.
+
+Now let’s confirm that our newly made script, ocr.py , also works:
+```bash
+$ python ocr.py --image images/example_01.png
+Noisy image
+to test
+Tesseract OCR
+```
+
