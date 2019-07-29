@@ -281,7 +281,7 @@ Unfortunately, Tesseract did not successfully OCR the text in the image.
 
 However, by using the blur  pre-processing method in ocr.py  we can obtain better results:
 ```bash
-python ocr.py --image images/example_02.png --preprocess blur
+$ python ocr.py --image images/example_02.png --preprocess blur
 Tesseract Will
 Fail With Noisy
 Backgrounds
@@ -316,7 +316,7 @@ documented to help you follow along.
 
 Followed by testing the image with `ocr.py` :
 ```bash
-python ocr.py --image images/example_03.png
+$ python ocr.py --image images/example_03.png
 PREREQUISITES
 
 In order to make the most of this, you will need to have
